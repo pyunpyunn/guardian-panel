@@ -67,6 +67,7 @@ function HouseholdStatus() {
   const [purok, setPurok] = useState("all");
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<Household | null>(null);
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => households.filter((household) => {
     const matchesSearch = `${household.name} ${household.account} ${household.purok}`.toLowerCase().includes(search.toLowerCase());
@@ -74,6 +75,11 @@ function HouseholdStatus() {
     const matchesStatus = status === "all" || household.status.toLowerCase() === status;
     return matchesSearch && matchesPurok && matchesStatus;
   }), [search, purok, status]);
+
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <main className="ops-page">
@@ -115,7 +121,7 @@ function HouseholdStatus() {
               <table className="household-table">
                 <thead><tr><th>Household</th><th>Purok</th><th>People</th><th>Status</th><th>Last location</th><th><span className="sr-only">Action</span></th></tr></thead>
                 <tbody>
-                  {filtered.map((household) => (
+                  {paged.map((household) => (
                     <tr className={household.status === "Unsafe" ? "urgent-row" : ""} key={household.id}>
                       <td><strong>{household.name}</strong><small>{household.account}</small></td>
                       <td>{household.purok}</td>
@@ -128,7 +134,14 @@ function HouseholdStatus() {
                 </tbody>
               </table>
             </div>
-            <div className="pagination"><span>Showing {filtered.length} of {households.length}</span><div><IconButton label="Previous page"><ChevronLeft size={16} /></IconButton><span className="page-number">1</span><IconButton label="Next page"><ChevronRight size={16} /></IconButton></div></div>
+            <div className="pagination">
+              <span>Showing {paged.length} of {filtered.length}</span>
+              <div>
+                <IconButton label="Previous page" onClick={() => setPage(Math.max(1, currentPage - 1))}><ChevronLeft size={16} /></IconButton>
+                <span className="page-number">{currentPage} / {totalPages}</span>
+                <IconButton label="Next page" onClick={() => setPage(Math.min(totalPages, currentPage + 1))}><ChevronRight size={16} /></IconButton>
+              </div>
+            </div>
           </div>
         </section>
 
